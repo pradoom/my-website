@@ -432,6 +432,211 @@
       .hero-heading { font-size: 2.7rem; }
       #projects .proj-grid { grid-template-columns: 1fr; }
     }
+
+    /* =========================================================  BLOG  ========================================================= */
+
+    /* Filter pills */
+    .blog-filters {
+      display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 2.8rem;
+    }
+    .blog-filter {
+      font-family: var(--mono); font-size: .68rem;
+      padding: .32rem .85rem; border: 1px solid var(--border);
+      color: var(--muted); background: none; cursor: none;
+      letter-spacing: .1em; text-transform: uppercase;
+      transition: border-color .25s, color .25s, background .25s;
+    }
+    .blog-filter:hover   { border-color: var(--a1); color: var(--a1); }
+    .blog-filter.active  { border-color: var(--a1); color: var(--bg); background: var(--a1); }
+
+    /* Blog grid */
+    #blog .blog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* Blog card */
+    .blog-card {
+      background: var(--surface); border: 1px solid var(--border);
+      overflow: hidden; cursor: none;
+      transition: transform .4s var(--ease), border-color .3s, box-shadow .4s;
+      position: relative;
+    }
+    .blog-card::before {
+      content: ''; position: absolute; top: 0; left: 0;
+      width: 0; height: 2px;
+      background: linear-gradient(to right, var(--a1), var(--a2));
+      transition: width .4s var(--ease); z-index: 2;
+    }
+    .blog-card:hover { transform: translateY(-5px); border-color: rgba(0,255,194,.22); box-shadow: 0 20px 55px rgba(0,0,0,.45), 0 0 0 1px rgba(0,255,194,.07); }
+    .blog-card:hover::before { width: 100%; }
+    .blog-card.hidden { display: none; }
+
+    /* Card top color bar by category */
+    .blog-card-accent {
+      height: 3px;
+    }
+    .blog-card-accent.cat-uart     { background: linear-gradient(to right, #00ffc2, #004dff); }
+    .blog-card-accent.cat-spi      { background: linear-gradient(to right, #004dff, #a855f7); }
+    .blog-card-accent.cat-i2c      { background: linear-gradient(to right, #f59e0b, #ef4444); }
+    .blog-card-accent.cat-rtos     { background: linear-gradient(to right, #10b981, #00ffc2); }
+    .blog-card-accent.cat-general  { background: linear-gradient(to right, #6b7a8f, #dde6f0); }
+
+    .blog-card-body { padding: 1.5rem; }
+    .blog-card-meta {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: .75rem;
+    }
+    .blog-cat {
+      font-family: var(--mono); font-size: .6rem;
+      color: var(--a1); background: rgba(0,255,194,.1);
+      padding: .18rem .55rem; letter-spacing: .1em; text-transform: uppercase;
+    }
+    .blog-date {
+      font-family: var(--mono); font-size: .6rem; color: var(--muted); letter-spacing: .06em;
+    }
+    .blog-card-title {
+      font-size: 1.05rem; font-weight: 800; line-height: 1.35;
+      margin-bottom: .65rem; letter-spacing: -.01em;
+    }
+    .blog-card-excerpt {
+      font-size: .86rem; color: var(--muted); line-height: 1.65;
+      margin-bottom: 1.2rem;
+      /* clamp to 3 lines */
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .blog-card-footer {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .blog-read-time {
+      font-family: var(--mono); font-size: .62rem; color: var(--muted);
+    }
+    .blog-read-btn {
+      font-family: var(--mono); font-size: .68rem; color: var(--a1);
+      display: flex; align-items: center; gap: .35rem;
+      transition: gap .25s var(--ease), color .25s;
+      background: none; border: none; cursor: none; padding: 0;
+    }
+    .blog-read-btn:hover { gap: .6rem; }
+    .blog-read-btn svg { width: 12px; height: 12px; }
+
+    /* =========================================================  BLOG MODAL  ========================================================= */
+    .blog-modal-overlay {
+      position: fixed; inset: 0; z-index: 2000;
+      background: rgba(0,0,0,.85);
+      backdrop-filter: blur(16px) saturate(160%);
+      display: flex; align-items: center; justify-content: center;
+      padding: 2rem;
+      opacity: 0; visibility: hidden;
+      transition: opacity .35s var(--ease), visibility .35s;
+    }
+    .blog-modal-overlay.open { opacity: 1; visibility: visible; }
+
+    .blog-modal {
+      background: var(--surface); border: 1px solid var(--border);
+      width: 100%; max-width: 780px; max-height: 88vh;
+      overflow-y: auto; position: relative;
+      transform: translateY(24px) scale(.98);
+      transition: transform .4s var(--ease);
+      scrollbar-width: thin; scrollbar-color: var(--a1) transparent;
+    }
+    .blog-modal::-webkit-scrollbar { width: 4px; }
+    .blog-modal::-webkit-scrollbar-thumb { background: var(--a1); border-radius: 2px; }
+    .blog-modal-overlay.open .blog-modal { transform: translateY(0) scale(1); }
+
+    /* Accent top bar in modal */
+    .modal-accent-bar { height: 3px; }
+    .modal-accent-bar.cat-uart     { background: linear-gradient(to right, #00ffc2, #004dff); }
+    .modal-accent-bar.cat-spi      { background: linear-gradient(to right, #004dff, #a855f7); }
+    .modal-accent-bar.cat-i2c      { background: linear-gradient(to right, #f59e0b, #ef4444); }
+    .modal-accent-bar.cat-rtos     { background: linear-gradient(to right, #10b981, #00ffc2); }
+    .modal-accent-bar.cat-general  { background: linear-gradient(to right, #6b7a8f, #dde6f0); }
+
+    .blog-modal-head {
+      padding: 2rem 2.5rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0;
+      background: var(--surface); z-index: 10;
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+    }
+    .modal-title-wrap {}
+    .modal-cat-row { display: flex; align-items: center; gap: .75rem; margin-bottom: .7rem; }
+    .modal-cat-pill { font-family: var(--mono); font-size: .62rem; color: var(--a1); background: rgba(0,255,194,.1); padding: .2rem .6rem; letter-spacing: .1em; text-transform: uppercase; }
+    .modal-date { font-family: var(--mono); font-size: .62rem; color: var(--muted); }
+    .modal-title {
+      font-size: clamp(1.3rem, 3vw, 1.9rem); font-weight: 900;
+      letter-spacing: -.025em; line-height: 1.15;
+    }
+    .modal-close {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      width: 36px; height: 36px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; cursor: none; line-height: 1;
+      transition: border-color .25s, color .25s, background .25s;
+    }
+    .modal-close:hover { border-color: var(--a3); color: var(--a3); background: rgba(255,60,95,.08); }
+
+    /* Blog content typography */
+    .blog-modal-content { padding: 2.5rem; }
+    .blog-content h2 {
+      font-size: 1.2rem; font-weight: 800; color: var(--text);
+      margin: 2rem 0 .75rem; letter-spacing: -.02em;
+    }
+    .blog-content h3 {
+      font-size: 1rem; font-weight: 700; color: var(--a1);
+      font-family: var(--mono); letter-spacing: .05em; text-transform: uppercase;
+      margin: 1.6rem 0 .6rem;
+    }
+    .blog-content p {
+      font-size: .95rem; color: var(--muted); line-height: 1.8;
+      margin-bottom: 1.1rem;
+    }
+    .blog-content strong { color: var(--text); font-weight: 700; }
+    .blog-content em { color: var(--a1); font-style: normal; }
+    .blog-content ul, .blog-content ol {
+      padding-left: 1.5rem; margin-bottom: 1.1rem;
+    }
+    .blog-content li {
+      font-size: .95rem; color: var(--muted); line-height: 1.75; margin-bottom: .4rem;
+    }
+    /* Code blocks */
+    .blog-content pre {
+      background: var(--bg); border: 1px solid var(--border);
+      border-left: 3px solid var(--a1);
+      padding: 1.2rem 1.4rem; overflow-x: auto;
+      margin: 1.2rem 0;
+      font-family: var(--mono); font-size: .78rem;
+      color: var(--a1); line-height: 1.7;
+    }
+    .blog-content code {
+      font-family: var(--mono); font-size: .8rem;
+      color: var(--a1); background: rgba(0,255,194,.07);
+      padding: .1rem .4rem;
+    }
+    /* Info/note box */
+    .blog-note {
+      border: 1px solid rgba(0,255,194,.2); background: rgba(0,255,194,.04);
+      border-left: 3px solid var(--a1);
+      padding: 1rem 1.2rem; margin: 1.2rem 0;
+    }
+    .blog-note p { margin: 0; color: var(--text); }
+    /* Diagram placeholder */
+    .blog-diagram {
+      border: 1px dashed var(--border); padding: 1.5rem;
+      text-align: center; margin: 1.5rem 0;
+      font-family: var(--mono); font-size: .8rem; color: var(--muted);
+      background: var(--bg);
+      line-height: 1.8;
+    }
+
+    /* Responsive blog */
+    @media (max-width:960px) {
+      #blog .blog-grid { grid-template-columns: 1fr; }
+      .blog-modal { max-height: 95vh; }
+      .blog-modal-head { padding: 1.5rem 1.2rem 1.2rem; }
+      .blog-modal-content { padding: 1.5rem 1.2rem; }
+    }
   </style>
 </head>
 <body>
@@ -455,12 +660,13 @@
   <a href="#home" class="nav-logo">
     <div class="nav-blink"></div>
     <!-- EDIT: your initials -->
-    pradoomrao@gmail.com
+    <span class="__cf_email__" data-cfemail="7e0e0c1f1a1111130c1f113e19131f1712501d1113">[email&#160;protected]</span>
   </a>
   <ul class="nav-links">
     <li><a href="#about">About</a></li>
     <li><a href="#projects">Projects</a></li>
     <li><a href="#experience">Experience</a></li>
+    <li><a href="#blog">Blog</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
   <a href="#contact" class="nav-btn"><span>Hire Me</span></a>
@@ -472,6 +678,7 @@
   <a href="#about"      onclick="cmn()">About</a>
   <a href="#projects"   onclick="cmn()">Projects</a>
   <a href="#experience" onclick="cmn()">Experience</a>
+  <a href="#blog"       onclick="cmn()">Blog</a>
   <a href="#contact"    onclick="cmn()">Contact</a>
 </div>
 
@@ -714,7 +921,7 @@
         <!-- EDIT: your email, GitHub, LinkedIn -->
         <a href="pradoomrao@gmail.com" class="c-link">
           <span class="c-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
-          pradoomrao@gmail.com
+          <span class="__cf_email__" data-cfemail="b7c7c5d6d3d8d8dac5d6d8f7d0dad6dedb99d4d8da">[email&#160;protected]</span>
         </a>
         <a href="https://github.com/pradoom" target="_blank" class="c-link">
           <span class="c-icon"><svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></span>
@@ -756,6 +963,429 @@
   </div>
 </section>
 
+<div class="divider"></div>
+
+<!-- ======= BLOG SECTION ======= -->
+<section id="blog">
+  <div class="sec-head reveal">
+    <span class="sec-num">05 /</span>
+    <h2 class="sec-title">Blog</h2>
+    <div class="sec-line"></div>
+  </div>
+
+  <!-- FILTER PILLS — clicking filters by category -->
+  <div class="blog-filters reveal">
+    <button class="blog-filter active" data-filter="all">All Posts</button>
+    <button class="blog-filter" data-filter="uart">UART</button>
+    <button class="blog-filter" data-filter="spi">SPI</button>
+    <button class="blog-filter" data-filter="i2c">I2C</button>
+    <button class="blog-filter" data-filter="rtos">RTOS</button>
+    <button class="blog-filter" data-filter="general">General</button>
+  </div>
+
+  <div class="blog-grid">
+
+    <!-- =====================================================================
+         BLOG POST 1
+         To edit: change data-cat, the title, excerpt, date, read-time,
+         and the content inside data-content (HTML is supported).
+    ===================================================================== -->
+    <div class="blog-card reveal" data-cat="uart"
+         data-title="How UART Works — A Deep Dive"
+         data-date="Jan 15, 2025"
+         data-readtime="6 min read"
+         data-content="
+           <h2>What is UART?</h2>
+           <p><strong>UART (Universal Asynchronous Receiver-Transmitter)</strong> is one of the oldest and most widely used serial communication protocols in embedded systems. Unlike SPI or I2C, UART is <em>asynchronous</em> — meaning there is no shared clock signal between the transmitter and receiver.</p>
+
+           <h3>Key Parameters</h3>
+           <p>For two UART devices to communicate, both must agree on these settings:</p>
+           <ul>
+             <li><strong>Baud Rate</strong> — bits per second (e.g. 9600, 115200)</li>
+             <li><strong>Data bits</strong> — usually 8 bits</li>
+             <li><strong>Parity bit</strong> — None / Even / Odd for error checking</li>
+             <li><strong>Stop bits</strong> — 1 or 2 bits marking the end of a frame</li>
+           </ul>
+
+           <h2>UART Frame Structure</h2>
+           <div class='blog-diagram'>
+| IDLE | START(0) | D0 | D1 | D2 | D3 | D4 | D5 | D6 | D7 | PARITY | STOP(1) | IDLE |
+           </div>
+           <p>The line sits <strong>HIGH (idle)</strong> when no data is being sent. A transmission begins with a <em>start bit</em> (always LOW), followed by 8 data bits (LSB first), an optional parity bit, and one or more stop bits (always HIGH).</p>
+
+           <h2>Baud Rate Mismatch</h2>
+           <p>Since there's no clock, both sides must use the same baud rate. A mismatch greater than ~3–4% will result in framing errors and corrupted data — a very common debugging headache!</p>
+
+           <h2>Understanding UART Baud Rate Calculation (Using 16 MHz Clock)</h2>
+           <p>
+    Many beginners use UART at 9600 baud but don’t know how this value is generated.
+</p>
+
+<p>
+    UART does <strong>NOT</strong> randomly create 9600 speed.
+</p>
+
+<p>
+    It divides the microcontroller clock using a <strong>Baud Rate Generator</strong>.
+</p>
+
+<p>
+    <strong>Example:</strong><br>
+    If MCU Clock = 16 MHz
+</p>
+
+<p>
+    <strong>UART Divider:</strong><br>
+    Clock / (16 × Baud Rate)
+</p>
+
+<p>
+    <strong>Why divide by 16 in UART?</strong>
+</p>
+
+<p>
+    <strong>Answer:</strong>
+</p>
+
+<p>
+    UART uses <strong>16× oversampling</strong> to accurately detect each bit without a shared clock.
+</p>
+
+<p>
+    The baud rate generator divides the MCU clock to create this <strong>16× sampling clock</strong>.
+</p>
+
+<p>
+    <strong>So for 9600 baud:</strong><br>
+    Divider = 16,000,000 / (16 × 9600)<br>
+    Divider ≈ 104
+</p>
+
+<p>
+    This value is loaded into the UART register (<strong>UBRR</strong> in many controllers).
+</p>
+
+<p>
+    This is why wrong clock configuration causes <strong>garbage data</strong> during serial communication.
+</p>
+
+<p>
+    <strong>Key Learning:</strong><br>
+    UART accuracy depends directly on <strong>clock accuracy</strong>.
+</p>
+
+<p>
+    In embedded systems, communication problems are often <strong>CLOCK problems</strong>, not code problems.
+</p>
+           <h3>STM32 UART Init (HAL)</h3>
+           <pre>UART_HandleTypeDef huart2;
+
+void MX_USART2_UART_Init(void) {
+  huart2.Instance        = USART2;
+  huart2.Init.BaudRate   = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits   = UART_STOPBITS_1;
+  huart2.Init.Parity     = UART_PARITY_NONE;
+  huart2.Init.Mode       = UART_MODE_TX_RX;
+  HAL_UART_Init(&amp;huart2);
+}
+
+// Transmit a string
+HAL_UART_Transmit(&amp;huart2, (uint8_t*)&quot;Hello\r\n&quot;, 7, 100);</pre>
+
+           <div class='blog-note'><p>💡 <strong>Pro Tip:</strong> Always use DMA or interrupt-driven UART in production firmware. Blocking HAL_UART_Transmit stalls your CPU and can break real-time tasks.</p></div>
+
+           <h2>RS-232 vs TTL UART</h2>
+           <p>UART is a protocol, not a physical standard. TTL UART uses 0V/3.3V or 0V/5V logic levels. RS-232 (used in older computers) uses ±12V. A level-shifter (like the MAX232) is needed to interface them.</p>
+         ">
+      <div class="blog-card-accent cat-uart"></div>
+      <div class="blog-card-body">
+        <div class="blog-card-meta">
+          <span class="blog-cat">UART</span>
+          <span class="blog-date">Jan 15, 2025</span>
+        </div>
+        <!-- EDIT: Post title -->
+        <h3 class="blog-card-title">How UART Works — A Deep Dive</h3>
+        <!-- EDIT: Short excerpt shown on card -->
+        <p class="blog-card-excerpt">UART is one of the simplest serial protocols, yet it trips up many developers. Learn the frame structure, baud rate matching, and how to use it correctly on STM32.</p>
+        <div class="blog-card-footer">
+          <span class="blog-read-time">6 min read</span>
+          <button class="blog-read-btn">
+            Read Post
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         BLOG POST 2
+    ===================================================================== -->
+    <div class="blog-card reveal" data-cat="spi"
+         data-title="SPI Protocol Explained with STM32"
+         data-date="Feb 3, 2025"
+         data-readtime="5 min read"
+         data-content="
+           <h2>What is SPI?</h2>
+           <p><strong>SPI (Serial Peripheral Interface)</strong> is a <em>synchronous</em>, full-duplex serial communication protocol developed by Motorola. It's widely used for high-speed communication with peripherals like displays, ADCs, flash memory, and SD cards.</p>
+
+           <h3>SPI Signal Lines</h3>
+           <ul>
+             <li><strong>SCLK</strong> — Clock generated by the master</li>
+             <li><strong>MOSI</strong> — Master Out, Slave In (data from master to slave)</li>
+             <li><strong>MISO</strong> — Master In, Slave Out (data from slave to master)</li>
+             <li><strong>CS / NSS</strong> — Chip Select, active LOW — selects which slave to talk to</li>
+           </ul>
+
+           <h2>SPI Modes (CPOL &amp; CPHA)</h2>
+           <div class='blog-diagram'>
+Mode 0: CPOL=0, CPHA=0 — Sample on rising  edge, idle LOW
+Mode 1: CPOL=0, CPHA=1 — Sample on falling edge, idle LOW
+Mode 2: CPOL=1, CPHA=0 — Sample on falling edge, idle HIGH
+Mode 3: CPOL=1, CPHA=1 — Sample on rising  edge, idle HIGH
+           </div>
+           <p>Always check your peripheral's datasheet to find the correct SPI mode. Mode 0 is the most common.</p>
+
+           <h3>STM32 SPI Example</h3>
+           <pre>SPI_HandleTypeDef hspi1;
+
+// Transmit 1 byte
+uint8_t txData = 0xAB;
+HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_RESET); // CS LOW
+HAL_SPI_Transmit(&amp;hspi1, &amp;txData, 1, HAL_MAX_DELAY);
+HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_SET);   // CS HIGH</pre>
+
+           <div class='blog-note'><p>💡 <strong>Common Mistake:</strong> Forgetting to toggle the CS (Chip Select) pin. Without it, the slave never knows when a transaction starts or ends.</p></div>
+
+           <h2>SPI vs UART vs I2C</h2>
+           <p>SPI is the <strong>fastest</strong> of the three (can go up to 50+ MHz on some MCUs), but uses more pins. Use SPI when speed matters and you have spare GPIO pins.</p>
+         ">
+      <div class="blog-card-accent cat-spi"></div>
+      <div class="blog-card-body">
+        <div class="blog-card-meta">
+          <span class="blog-cat">SPI</span>
+          <span class="blog-date">Feb 3, 2025</span>
+        </div>
+        <h3 class="blog-card-title">SPI Protocol Explained with STM32</h3>
+        <p class="blog-card-excerpt">SPI is the go-to protocol for high-speed peripherals. This post breaks down CPOL/CPHA modes, signal lines, and shows a real STM32 example for driving an SPI device.</p>
+        <div class="blog-card-footer">
+          <span class="blog-read-time">5 min read</span>
+          <button class="blog-read-btn">
+            Read Post
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         BLOG POST 3
+    ===================================================================== -->
+    <div class="blog-card reveal" data-cat="i2c"
+         data-title="I2C Bus — How Addressing & ACK Work"
+         data-date="Feb 20, 2025"
+         data-readtime="7 min read"
+         data-content="
+           <h2>I2C in a Nutshell</h2>
+           <p><strong>I2C (Inter-Integrated Circuit)</strong> is a two-wire, multi-master, multi-slave protocol. It only needs two lines — <em>SDA</em> (data) and <em>SCL</em> (clock) — making it ideal when GPIO pins are scarce.</p>
+
+           <h3>I2C Signal Lines</h3>
+           <ul>
+             <li><strong>SDA</strong> — Bidirectional data line</li>
+             <li><strong>SCL</strong> — Clock line, driven by the master</li>
+           </ul>
+           <p>Both lines require <strong>pull-up resistors</strong> (typically 4.7kΩ for 100kHz, 2.2kΩ for 400kHz). Forgetting these is one of the most common I2C bugs!</p>
+
+           <h2>7-bit Addressing</h2>
+           <p>Each I2C slave has a unique 7-bit address. During a transaction, the master sends the 7-bit address followed by a R/W bit. The slave with the matching address responds with an <em>ACK</em> (pulls SDA LOW).</p>
+           <div class='blog-diagram'>
+START | ADDR[7] ADDR[6] ... ADDR[1] ADDR[0] | R/W | ACK | DATA | ACK | ... | STOP
+           </div>
+
+           <h3>Scanning for I2C Devices</h3>
+           <pre>// Scan all 128 possible I2C addresses
+for (uint8_t addr = 1; addr &lt; 128; addr++) {
+  if (HAL_I2C_IsDeviceReady(&amp;hi2c1, addr &lt;&lt; 1, 1, 10) == HAL_OK) {
+    // Device found at address 'addr'
+  }
+}</pre>
+
+           <div class='blog-note'><p>⚠️ <strong>Watch out:</strong> I2C addresses in STM32 HAL are left-shifted by 1 bit. If your sensor datasheet says address <code>0x48</code>, pass <code>0x48 &lt;&lt; 1</code> = <code>0x90</code> to HAL functions.</p></div>
+
+           <h2>I2C Speed Modes</h2>
+           <ul>
+             <li><strong>Standard Mode</strong> — 100 kHz</li>
+             <li><strong>Fast Mode</strong> — 400 kHz</li>
+             <li><strong>Fast Mode Plus</strong> — 1 MHz</li>
+             <li><strong>High-Speed Mode</strong> — 3.4 MHz (rare)</li>
+           </ul>
+         ">
+      <div class="blog-card-accent cat-i2c"></div>
+      <div class="blog-card-body">
+        <div class="blog-card-meta">
+          <span class="blog-cat">I2C</span>
+          <span class="blog-date">Feb 20, 2025</span>
+        </div>
+        <h3 class="blog-card-title">I2C Bus — How Addressing &amp; ACK Work</h3>
+        <p class="blog-card-excerpt">I2C's two-wire bus can connect dozens of devices, but address collisions, missing pull-ups, and STM32 HAL quirks trip up beginners. Here's how it all fits together.</p>
+        <div class="blog-card-footer">
+          <span class="blog-read-time">7 min read</span>
+          <button class="blog-read-btn">
+            Read Post
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         BLOG POST 4
+    ===================================================================== -->
+    <div class="blog-card reveal" data-cat="rtos"
+         data-title="FreeRTOS Tasks vs Threads — When to Use What"
+         data-date="Mar 5, 2025"
+         data-readtime="8 min read"
+         data-content="
+           <h2>Why Use an RTOS?</h2>
+           <p>On bare-metal firmware, everything runs in a single super-loop. This works fine for simple applications, but once you need precise timing, multiple concurrent behaviors, or priority management — a <strong>Real-Time Operating System (RTOS)</strong> like FreeRTOS becomes essential.</p>
+
+           <h2>FreeRTOS Tasks</h2>
+           <p>A <em>task</em> in FreeRTOS is similar to a thread in a desktop OS. Each task has its own stack, priority level, and runs independently. The FreeRTOS scheduler decides which task runs based on priority and state.</p>
+
+           <h3>Task States</h3>
+           <div class='blog-diagram'>
+Running → Blocked (waiting for event/delay)
+Running → Suspended (manually paused)
+Blocked  → Ready (event occurred)
+Ready    → Running (scheduler picks it)
+           </div>
+
+           <h3>Creating a Task</h3>
+           <pre>void vMyTask(void *pvParameters) {
+  for(;;) {
+    // Your task code here
+    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+    vTaskDelay(pdMS_TO_TICKS(500)); // Block for 500ms
+  }
+}
+
+// In main() after HAL_Init:
+xTaskCreate(
+  vMyTask,       // Task function
+  &quot;LED_Task&quot;,   // Task name (debug only)
+  128,           // Stack size in words
+  NULL,          // Parameters
+  1,             // Priority (higher = more important)
+  NULL           // Task handle
+);
+vTaskStartScheduler();</pre>
+
+           <div class='blog-note'><p>💡 <strong>Key Rule:</strong> Never call <code>HAL_Delay()</code> inside a FreeRTOS task — it blocks the CPU entirely and starves other tasks. Always use <code>vTaskDelay()</code> which yields control to the scheduler.</p></div>
+
+           <h2>Task Priority Tips</h2>
+           <ul>
+             <li>Higher priority number = higher priority in FreeRTOS</li>
+             <li>Give time-critical tasks (e.g., motor control) high priority</li>
+             <li>Give UI or logging tasks low priority</li>
+             <li>Use equal priorities for tasks that should take turns (round-robin)</li>
+           </ul>
+         ">
+      <div class="blog-card-accent cat-rtos"></div>
+      <div class="blog-card-body">
+        <div class="blog-card-meta">
+          <span class="blog-cat">RTOS</span>
+          <span class="blog-date">Mar 5, 2025</span>
+        </div>
+        <h3 class="blog-card-title">FreeRTOS Tasks — When &amp; How to Use Them</h3>
+        <p class="blog-card-excerpt">Moving from bare-metal super-loops to FreeRTOS tasks is a game changer. Learn task states, priorities, and the one HAL_Delay mistake everyone makes.</p>
+        <div class="blog-card-footer">
+          <span class="blog-read-time">8 min read</span>
+          <button class="blog-read-btn">
+            Read Post
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         BLOG POST 5
+    ===================================================================== -->
+    <div class="blog-card reveal" data-cat="general"
+         data-title="5 Debugging Tips Every Embedded Developer Should Know"
+         data-date="Mar 18, 2025"
+         data-readtime="4 min read"
+         data-content="
+           <h2>Debugging Embedded Systems Is Different</h2>
+           <p>Unlike web or app development, embedded bugs can be caused by hardware, timing, power supply, signal integrity, or simply a wrong register value. Here are 5 techniques I use daily.</p>
+
+           <h3>1. Use a Logic Analyzer</h3>
+           <p>A <strong>logic analyzer</strong> (even a cheap 8-channel one from eBay) is invaluable. It lets you <em>see</em> your UART, SPI, or I2C transactions in real-time and verify the timing is correct. I cannot overstate how many bugs this has helped me find.</p>
+
+           <h3>2. Toggle a GPIO Pin</h3>
+           <p>The simplest profiling tool available: toggle a GPIO pin at the start and end of a function, then measure the pulse width on an oscilloscope. You'll know exactly how long your ISR or task takes.</p>
+           <pre>// Measure execution time of a function
+HAL_GPIO_WritePin(DEBUG_GPIO_Port, DEBUG_Pin, 1);
+my_function();
+HAL_GPIO_WritePin(DEBUG_GPIO_Port, DEBUG_Pin, 0);</pre>
+
+           <h3>3. Printf Over SWO / UART</h3>
+           <p>Redirect <code>printf</code> to UART or SWO (Serial Wire Output) for lightweight logging. This lets you print variable values without halting execution like a breakpoint would.</p>
+
+           <h3>4. Watchdog Timer</h3>
+           <p>Enable the <strong>Independent Watchdog (IWDG)</strong> from day one. It resets the MCU if your firmware gets stuck. During debugging, a watchdog reset is a strong hint that a task is deadlocked or an ISR is running too long.</p>
+
+           <h3>5. Read the Datasheet</h3>
+           <div class='blog-note'><p>📖 Seriously. 90% of embedded bugs I've seen come from assumptions that contradict the datasheet. When in doubt, read the relevant section again — especially errata documents.</p></div>
+         ">
+      <div class="blog-card-accent cat-general"></div>
+      <div class="blog-card-body">
+        <div class="blog-card-meta">
+          <span class="blog-cat">General</span>
+          <span class="blog-date">Mar 18, 2025</span>
+        </div>
+        <h3 class="blog-card-title">5 Debugging Tips Every Embedded Developer Should Know</h3>
+        <p class="blog-card-excerpt">Logic analyzers, GPIO toggling, SWO printf, watchdog timers — these 5 techniques will save you hours on your next embedded debugging session.</p>
+        <div class="blog-card-footer">
+          <span class="blog-read-time">4 min read</span>
+          <button class="blog-read-btn">
+            Read Post
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         ADD YOUR OWN BLOG POST:
+         Copy this block, change data-cat to one of: uart / spi / i2c / rtos / general
+         Fill in data-title, data-date, data-readtime, data-content (supports HTML).
+         Update the visible card title and excerpt too.
+    ===================================================================== -->
+
+  </div><!-- /blog-grid -->
+</section>
+
+<!-- ======= BLOG MODAL (popup reader) ======= -->
+<div class="blog-modal-overlay" id="blogModal">
+  <div class="blog-modal" id="blogModalBox">
+    <div class="modal-accent-bar" id="modalAccentBar"></div>
+    <div class="blog-modal-head">
+      <div class="modal-title-wrap">
+        <div class="modal-cat-row">
+          <span class="modal-cat-pill" id="modalCat"></span>
+          <span class="modal-date" id="modalDate"></span>
+        </div>
+        <h2 class="modal-title" id="modalTitle"></h2>
+      </div>
+      <button class="modal-close" id="modalClose">×</button>
+    </div>
+    <div class="blog-modal-content">
+      <div class="blog-content" id="modalBody"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ======= FOOTER ======= -->
 <!-- EDIT: your name -->
 <footer>
@@ -767,7 +1397,7 @@
 </footer>
 
 <!-- ======= JAVASCRIPT ======= -->
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 /* ----- LOADER ----- */
 (function(){
   const loader=document.getElementById('loader'), lp=document.getElementById('lp');
@@ -895,7 +1525,7 @@ document.querySelectorAll('.proj-card').forEach(card=>{
 
 /* ----- MOBILE NAV ----- */
 document.getElementById('hbg').addEventListener('click',()=>document.getElementById('mn').classList.add('open'));
-document.getElementById('mc').addEventListener('click',()=>document.getElementById('mn').classList.remove('open'));
+document.getElementById('mc').addEventListener('click',()=>document.getElementById('mn').classRemove('open'));
 function cmn(){document.getElementById('mn').classList.remove('open');}
 
 /* ----- TOUCH: disable custom cursor ----- */
@@ -903,6 +1533,66 @@ if('ontouchstart' in window){
   dot.style.display='none'; ring.style.display='none';
   document.body.style.cursor='auto';
 }
+
+/* ----- BLOG FILTER ----- */
+document.querySelectorAll('.blog-filter').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.blog-filter').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    const filter = this.dataset.filter;
+    document.querySelectorAll('.blog-card').forEach(card => {
+      if (filter === 'all' || card.dataset.cat === filter) {
+        card.classList.remove('hidden');
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+  });
+});
+
+/* ----- BLOG MODAL ----- */
+const blogModal   = document.getElementById('blogModal');
+const modalTitle  = document.getElementById('modalTitle');
+const modalCat    = document.getElementById('modalCat');
+const modalDate   = document.getElementById('modalDate');
+const modalBody   = document.getElementById('modalBody');
+const modalAccent = document.getElementById('modalAccentBar');
+const modalBox    = document.getElementById('blogModalBox');
+
+function openBlog(card) {
+  modalTitle.textContent = card.dataset.title;
+  modalCat.textContent   = card.dataset.cat.toUpperCase();
+  modalDate.textContent  = card.dataset.date + ' · ' + card.dataset.readtime;
+  modalBody.innerHTML    = card.dataset.content;
+  modalAccent.className  = 'modal-accent-bar cat-' + card.dataset.cat;
+  blogModal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  modalBox.scrollTop = 0;
+}
+function closeBlog() {
+  blogModal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.querySelectorAll('.blog-read-btn').forEach(btn => {
+  btn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    openBlog(this.closest('.blog-card'));
+  });
+});
+document.querySelectorAll('.blog-card').forEach(card => {
+  card.addEventListener('click', function() { openBlog(this); });
+});
+document.getElementById('modalClose').addEventListener('click', closeBlog);
+blogModal.addEventListener('click', function(e) { if (e.target === blogModal) closeBlog(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeBlog(); });
+
+/* add blog elements to cursor hover */
+document.querySelectorAll('.blog-card,.blog-filter,.blog-read-btn,.modal-close').forEach(el=>{
+  el.addEventListener('mouseenter',()=>document.body.classList.add('c-hover'));
+  el.addEventListener('mouseleave',()=>document.body.classList.remove('c-hover'));
+});
+
 </script>
 </body>
 </html>
