@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Name | Embedded Systems Developer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Cabinet+Grotesk:wght@400;500;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.bunny.net/css?family=cabinet-grotesk:400,500,700,800,900" rel="stylesheet"/>
+
+  <style>
+    /* =========================================================  TOKENS  ========================================================= */
+    :root {
+      --bg:       #050709;
+      --surface:  #0c0f14;
+      --border:   rgba(255,255,255,.07);
+      --a1:       #00ffc2;
+      --a2:       #004dff;
+      --a3:       #ff3c5f;
+      --text:     #dde6f0;
+      --muted:    #566070;
+      --mono:     'DM Mono', monospace;
+      --display:  'Cabinet Grotesk', sans-serif;
+      --ease:     cubic-bezier(.16,1,.3,1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--display);
+      overflow-x: hidden;
+      cursor: none;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; width: 100%; }
+    ::selection { background: var(--a1); color: var(--bg); }
+
+    /* =========================================================  CURSOR  ========================================================= */
+    #cursor-dot {
+      position: fixed; top: 0; left: 0; z-index: 9999;
+      width: 8px; height: 8px;
+      background: var(--a1); border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%,-50%);
+      transition: width .2s var(--ease), height .2s var(--ease);
+      mix-blend-mode: difference;
+    }
+    #cursor-ring {
+      position: fixed; top: 0; left: 0; z-index: 9998;
+      width: 36px; height: 36px;
+      border: 1.5px solid rgba(0,255,194,.5);
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%,-50%);
+      transition: width .3s var(--ease), height .3s var(--ease), border-color .3s;
+    }
+    body.c-hover #cursor-dot  { width: 14px; height: 14px; }
+    body.c-hover #cursor-ring { width: 54px; height: 54px; border-color: var(--a1); }
+
+    /* =========================================================  NOISE  ========================================================= */
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 9000;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");
+      background-size: 220px 220px;
+      pointer-events: none; opacity: .45;
+    }
+
+    /* =========================================================  CANVAS  ========================================================= */
+    #bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+    /* =========================================================  LOADER  ========================================================= */
+    #loader {
+      position: fixed; inset: 0; z-index: 8000;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 1rem;
+    }
+    #loader.done { animation: loaderOut .5s .15s var(--ease) forwards; pointer-events: none; }
+    @keyframes loaderOut { to { opacity:0; visibility:hidden; } }
+    .loader-bar-wrap { width: 180px; height: 1px; background: rgba(255,255,255,.07); overflow: hidden; }
+    .loader-bar {
+      height: 100%; background: var(--a1);
+      transform: scaleX(0); transform-origin: left;
+      animation: loadBar 1.3s var(--ease) forwards;
+    }
+    @keyframes loadBar { to { transform: scaleX(1); } }
+    .loader-lbl { font-family: var(--mono); font-size: .68rem; color: var(--muted); letter-spacing: .15em; text-transform: uppercase; }
+    .loader-pct { font-family: var(--mono); font-size: .62rem; color: var(--a1); }
+
+    /* =========================================================  NAV  ========================================================= */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.1rem 3rem;
+      transition: background .4s, backdrop-filter .4s, border-bottom .4s;
+    }
+    nav.scrolled {
+      background: rgba(5,7,9,.85);
+      backdrop-filter: blur(24px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: var(--mono); font-size: .8rem; color: var(--a1);
+      letter-spacing: .12em; display: flex; align-items: center; gap: .55rem;
+    }
+    .nav-blink {
+      width: 7px; height: 7px; background: var(--a1);
+      border-radius: 50%; animation: blink 1.4s step-end infinite;
+    }
+    @keyframes blink { 50%{opacity:0;} }
+    .nav-links { display: flex; gap: 2.2rem; list-style: none; }
+    .nav-links a {
+      font-family: var(--mono); font-size: .72rem; color: var(--muted);
+      letter-spacing: .12em; text-transform: uppercase;
+      position: relative; transition: color .25s;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -3px; left: 0; right: 0;
+      height: 1px; background: var(--a1);
+      transform: scaleX(0); transform-origin: right;
+      transition: transform .35s var(--ease);
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--a1); }
+    .nav-links a:hover::after, .nav-links a.active::after { transform: scaleX(1); transform-origin: left; }
+    .nav-btn {
+      position: relative; overflow: hidden;
+      font-family: var(--mono); font-size: .72rem; color: var(--a1);
+      border: 1px solid var(--a1); padding: .5rem 1.2rem;
+      letter-spacing: .12em; text-transform: uppercase; transition: color .3s;
+    }
+    .nav-btn::before {
+      content: ''; position: absolute; inset: 0; background: var(--a1);
+      transform: translateY(100%); transition: transform .35s var(--ease);
+    }
+    .nav-btn:hover { color: var(--bg); }
+    .nav-btn:hover::before { transform: translateY(0); }
+    .nav-btn span { position: relative; z-index: 1; }
+    .hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: none; padding: .3rem; }
+    .hamburger span { display: block; width: 24px; height: 2px; background: var(--text); transition: .3s var(--ease); }
+
+    /* =========================================================  HERO  ========================================================= */
+    #home {
+      min-height: 100vh; display: flex; align-items: center;
+      padding: 8rem 3rem 4rem; position: relative; z-index: 1;
+    }
+    .hero-inner { max-width: 1100px; width: 100%; }
+    .hero-status {
+      display: inline-flex; align-items: center; gap: .6rem;
+      border: 1px solid var(--border); background: rgba(255,255,255,.02);
+      padding: .35rem .9rem; font-family: var(--mono); font-size: .7rem;
+      color: var(--muted); letter-spacing: .1em; margin-bottom: 2rem;
+      opacity: 0; animation: fadeIn .6s .15s forwards;
+    }
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--a1); box-shadow: 0 0 8px var(--a1);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.35;} }
+    .hero-heading {
+      font-size: clamp(3.2rem, 9vw, 8rem); font-weight: 900;
+      line-height: .93; letter-spacing: -.04em; margin-bottom: 1.8rem;
+    }
+    .hero-line {
+      display: block; overflow: hidden;
+    }
+    .hero-line-inner {
+      display: block;
+      opacity: 0; transform: translateY(64px);
+      animation: lineUp .75s var(--ease) forwards;
+    }
+    .hl1 .hero-line-inner { animation-delay: .25s; }
+    .hl2 .hero-line-inner { animation-delay: .4s; }
+    .hl3 .hero-line-inner { animation-delay: .55s; }
+    @keyframes lineUp { to { opacity:1; transform:translateY(0); } }
+    .ha { color: var(--a1); position: relative; display: inline-block; }
+    .ha::after {
+      content: ''; position: absolute; bottom: 8px; left: 0; right: 0;
+      height: 3px; background: var(--a1); opacity: .28;
+    }
+    .hero-meta {
+      display: flex; align-items: flex-start; gap: 3rem;
+      opacity: 0; animation: fadeUp .7s .75s var(--ease) forwards;
+    }
+    .hero-desc { max-width: 420px; font-size: 1rem; color: var(--muted); line-height: 1.75; }
+    .hero-ctas { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start; }
+
+    /* Magnetic buttons */
+    .btn {
+      position: relative; overflow: hidden; display: inline-flex; align-items: center; gap: .5rem;
+      padding: .88rem 2rem; font-family: var(--mono); font-size: .78rem;
+      font-weight: 500; letter-spacing: .1em; text-transform: uppercase;
+      transition: transform .2s var(--ease), box-shadow .2s;
+    }
+    .btn-fill { background: var(--a1); color: var(--bg); }
+    .btn-fill::before {
+      content: ''; position: absolute; inset: 0;
+      background: rgba(255,255,255,.18);
+      transform: translateX(-110%) skewX(-15deg);
+      transition: transform .5s var(--ease);
+    }
+    .btn-fill:hover::before { transform: translateX(110%) skewX(-15deg); }
+    .btn-fill:hover { box-shadow: 0 0 40px rgba(0,255,194,.28); }
+    .btn-ghost { color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost::before {
+      content: ''; position: absolute; inset: 0; background: rgba(255,255,255,.04);
+      transform: scaleX(0); transform-origin: left; transition: transform .4s var(--ease);
+    }
+    .btn-ghost:hover::before { transform: scaleX(1); }
+
+    /* Ticker */
+    .hero-ticker {
+      position: absolute; right: 3rem; top: 50%; transform: translateY(-50%);
+      display: flex; flex-direction: column; gap: 2.5rem;
+      opacity: 0; animation: fadeIn .8s 1s forwards;
+    }
+    .ticker-item { text-align: right; padding-right: 1.2rem; border-right: 2px solid var(--a1); }
+    .ticker-num { font-size: 2.2rem; font-weight: 900; color: var(--a1); line-height: 1; }
+    .ticker-lbl { font-family: var(--mono); font-size: .62rem; color: var(--muted); letter-spacing: .15em; text-transform: uppercase; }
+
+    /* Scroll hint */
+    .scroll-hint {
+      position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: .6rem;
+      opacity: 0; animation: fadeIn .8s 1.4s forwards;
+    }
+    .scroll-hint span { font-family: var(--mono); font-size: .62rem; color: var(--muted); letter-spacing: .15em; text-transform: uppercase; }
+    .scroll-line {
+      width: 1px; height: 48px;
+      background: linear-gradient(to bottom, var(--a1), transparent);
+      animation: scrollAnim 1.8s ease-in-out infinite;
+    }
+    @keyframes scrollAnim {
+      0%   { transform: scaleY(0); transform-origin: top; }
+      50%  { transform: scaleY(1); transform-origin: top; }
+      51%  { transform-origin: bottom; }
+      100% { transform: scaleY(0); transform-origin: bottom; }
+    }
+
+    /* =========================================================  SECTION SHARED  ========================================================= */
+    section { padding: 7rem 3rem; position: relative; z-index: 1; }
+    .divider { width: 100%; height: 1px; background: linear-gradient(to right, transparent, var(--border), transparent); position: relative; z-index: 1; }
+    .sec-head { display: flex; align-items: center; gap: 1.2rem; margin-bottom: 4rem; }
+    .sec-num { font-family: var(--mono); font-size: .68rem; color: var(--a1); letter-spacing: .2em; }
+    .sec-title { font-size: clamp(1.9rem, 4vw, 3rem); font-weight: 900; letter-spacing: -.03em; }
+    .sec-line { flex: 1; height: 1px; background: linear-gradient(to right, var(--border), transparent); max-width: 260px; }
+
+    /* =========================================================  ABOUT  ========================================================= */
+    #about .about-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: start; }
+    .about-text p { font-size: 1.05rem; color: var(--muted); line-height: 1.85; margin-bottom: 1.2rem; }
+    .about-text p:first-child { font-size: 1.18rem; color: var(--text); }
+    .about-text strong { color: var(--text); font-weight: 700; }
+    .skills-wrap { display: flex; flex-direction: column; gap: 1.8rem; }
+    .sg-head { font-family: var(--mono); font-size: .68rem; letter-spacing: .15em; text-transform: uppercase; color: var(--a1); margin-bottom: .75rem; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .chip {
+      font-family: var(--mono); font-size: .68rem;
+      padding: .3rem .75rem; border: 1px solid var(--border);
+      color: var(--muted); background: var(--surface); letter-spacing: .05em;
+      transition: border-color .25s, color .25s, background .25s, transform .2s var(--ease);
+      cursor: none;
+    }
+    .chip:hover { border-color: var(--a1); color: var(--a1); background: rgba(0,255,194,.06); transform: translateY(-2px); }
+
+    /* =========================================================  PROJECTS  ========================================================= */
+    #projects .proj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem; }
+    .proj-card {
+      position: relative; background: var(--surface); border: 1px solid var(--border);
+      overflow: hidden; cursor: none;
+      transition: transform .4s var(--ease), border-color .3s, box-shadow .4s;
+    }
+    .proj-card::before {
+      content: ''; position: absolute; top: 0; left: 0;
+      width: 0; height: 2px;
+      background: linear-gradient(to right, var(--a1), var(--a2));
+      transition: width .4s var(--ease); z-index: 2;
+    }
+    .proj-card:hover { transform: translateY(-6px); border-color: rgba(0,255,194,.22); box-shadow: 0 24px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(0,255,194,.07); }
+    .proj-card:hover::before { width: 100%; }
+    .proj-visual { width: 100%; aspect-ratio: 16/9; position: relative; overflow: hidden; background: #0a0e16; }
+    .proj-visual img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease); }
+    .proj-card:hover .proj-visual img { transform: scale(1.06); }
+    .proj-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative; }
+    .proj-placeholder svg { width: 36px; height: 36px; color: rgba(255,255,255,.07); position: relative; z-index: 1; }
+    .proj-placeholder::before {
+      content: ''; position: absolute; inset: 0;
+      background-image: linear-gradient(rgba(0,255,194,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,194,.04) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    .proj-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,.75);
+      display: flex; align-items: center; justify-content: center; gap: 1rem;
+      opacity: 0; transition: opacity .35s; backdrop-filter: blur(4px);
+    }
+    .proj-card:hover .proj-overlay { opacity: 1; }
+    .proj-overlay-btn {
+      font-family: var(--mono); font-size: .7rem; border: 1px solid rgba(255,255,255,.3);
+      color: var(--text); padding: .5rem 1rem; letter-spacing: .1em; text-transform: uppercase;
+      transition: border-color .2s, color .2s, background .2s; cursor: none;
+    }
+    .proj-overlay-btn:hover { border-color: var(--a1); color: var(--a1); background: rgba(0,255,194,.08); }
+    .proj-body { padding: 1.6rem; }
+    .proj-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: .6rem; }
+    .proj-num { font-family: var(--mono); font-size: .62rem; color: var(--a1); letter-spacing: .18em; }
+    .proj-feat { font-family: var(--mono); font-size: .58rem; color: var(--bg); background: var(--a1); padding: .15rem .5rem; letter-spacing: .1em; text-transform: uppercase; }
+    .proj-title { font-size: 1.15rem; font-weight: 800; line-height: 1.3; margin-bottom: .75rem; }
+    .proj-desc { font-size: .88rem; color: var(--muted); line-height: 1.65; margin-bottom: 1.2rem; }
+    .proj-techs { display: flex; flex-wrap: wrap; gap: .35rem; }
+    .tech-tag { font-family: var(--mono); font-size: .62rem; color: var(--a1); background: rgba(0,255,194,.08); padding: .18rem .55rem; letter-spacing: .05em; }
+
+    /* =========================================================  EXPERIENCE  ========================================================= */
+    #experience .tl { position: relative; padding-left: 2rem; max-width: 780px; }
+    #experience .tl::before {
+      content: ''; position: absolute; left: 0; top: 6px; bottom: 0;
+      width: 1px; background: linear-gradient(to bottom, var(--a1), transparent);
+    }
+    .tl-item {
+      position: relative; padding: 0 0 3.5rem 2.5rem;
+      opacity: 0; transform: translateX(-16px);
+      transition: opacity .6s var(--ease), transform .6s var(--ease);
+    }
+    .tl-item.visible { opacity: 1; transform: translateX(0); }
+    .tl-item::before {
+      content: ''; position: absolute; left: -2.28rem; top: 4px;
+      width: 10px; height: 10px; border: 2px solid var(--a1);
+      background: var(--bg); border-radius: 50%;
+      box-shadow: 0 0 12px rgba(0,255,194,.4); transition: background .3s;
+    }
+    .tl-item:hover::before { background: var(--a1); }
+    .tl-date { font-family: var(--mono); font-size: .68rem; color: var(--a1); letter-spacing: .12em; margin-bottom: .4rem; }
+    .tl-title { font-size: 1.1rem; font-weight: 800; margin-bottom: .2rem; }
+    .tl-org { font-family: var(--mono); font-size: .72rem; color: var(--muted); margin-bottom: .75rem; }
+    .tl-desc { font-size: .9rem; color: var(--muted); line-height: 1.75; }
+
+    /* =========================================================  CONTACT  ========================================================= */
+    #contact .cl { display: grid; grid-template-columns: 1fr 1.5fr; gap: 5rem; align-items: start; }
+    .contact-big { font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 900; line-height: 1.05; letter-spacing: -.03em; margin-bottom: 1.5rem; }
+    .contact-big span { color: var(--a1); }
+    .contact-intro { font-size: .95rem; color: var(--muted); line-height: 1.75; margin-bottom: 2rem; }
+    .c-links { display: flex; flex-direction: column; gap: .9rem; }
+    .c-link { display: flex; align-items: center; gap: .75rem; font-family: var(--mono); font-size: .78rem; color: var(--muted); transition: color .25s; }
+    .c-link:hover { color: var(--a1); }
+    .c-icon {
+      width: 32px; height: 32px; border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: border-color .25s, background .25s;
+    }
+    .c-link:hover .c-icon { border-color: var(--a1); background: rgba(0,255,194,.08); }
+    .c-icon svg { width: 14px; height: 14px; }
+
+    /* Form */
+    .cf { display: flex; flex-direction: column; gap: 1.2rem; }
+    .f-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+    .f-group { display: flex; flex-direction: column; gap: .45rem; }
+    .f-lbl { font-family: var(--mono); font-size: .65rem; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; }
+    .f-in, .f-ta {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); font-family: var(--display); font-size: .9rem;
+      padding: .85rem 1rem; outline: none; resize: none;
+      transition: border-color .25s, box-shadow .25s; cursor: none;
+    }
+    .f-in::placeholder, .f-ta::placeholder { color: var(--muted); opacity: .45; }
+    .f-in:focus, .f-ta:focus { border-color: var(--a1); box-shadow: 0 0 0 3px rgba(0,255,194,.07); }
+    .f-ta { min-height: 130px; }
+    .f-btn {
+      display: inline-flex; align-items: center; gap: .6rem; align-self: flex-start;
+      position: relative; overflow: hidden; background: var(--a1); color: var(--bg);
+      border: none; font-family: var(--mono); font-size: .78rem; font-weight: 600;
+      letter-spacing: .12em; text-transform: uppercase; padding: .9rem 2rem; cursor: none;
+      transition: box-shadow .3s, transform .2s var(--ease);
+    }
+    .f-btn::before {
+      content: ''; position: absolute; inset: 0; background: rgba(0,0,0,.15);
+      transform: translateX(-110%) skewX(-10deg); transition: transform .5s var(--ease);
+    }
+    .f-btn:hover { box-shadow: 0 8px 32px rgba(0,255,194,.28); transform: translateY(-2px); }
+    .f-btn:hover::before { transform: translateX(110%) skewX(-10deg); }
+    .f-btn svg { width: 14px; height: 14px; transition: transform .3s var(--ease); }
+    .f-btn:hover svg { transform: translateX(4px); }
+    .f-note { font-family: var(--mono); font-size: .62rem; color: var(--muted); }
+
+    /* =========================================================  FOOTER  ========================================================= */
+    footer {
+      border-top: 1px solid var(--border); padding: 2rem 3rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: relative; z-index: 1;
+    }
+    .fc { font-family: var(--mono); font-size: .65rem; color: var(--muted); }
+    .fc span { color: var(--a1); }
+    .fl { display: flex; gap: 1.5rem; }
+    .fl a { font-family: var(--mono); font-size: .65rem; color: var(--muted); transition: color .25s; }
+    .fl a:hover { color: var(--a1); }
+
+    /* =========================================================  SCROLL REVEAL  ========================================================= */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* =========================================================  MOBILE NAV  ========================================================= */
+    .mob-nav {
+      display: none; position: fixed; inset: 0; z-index: 600;
+      background: rgba(5,7,9,.97); backdrop-filter: blur(20px);
+      flex-direction: column; align-items: center; justify-content: center; gap: 2rem;
+    }
+    .mob-nav.open { display: flex; }
+    .mob-nav a { font-family: var(--mono); font-size: 1.2rem; color: var(--text); letter-spacing: .15em; text-transform: uppercase; transition: color .25s; }
+    .mob-nav a:hover { color: var(--a1); }
+    .mob-close { position: absolute; top: 1.5rem; right: 1.5rem; background: none; border: none; color: var(--text); font-size: 2rem; cursor: none; font-family: var(--mono); line-height: 1; }
+
+    /* =========================================================  ANIMATIONS  ========================================================= */
+    @keyframes fadeUp  { from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);} }
+    @keyframes fadeIn  { from{opacity:0;}to{opacity:1;} }
+
+    /* =========================================================  RESPONSIVE  ========================================================= */
+    @media (max-width:960px) {
+      nav { padding: 1rem 1.5rem; }
+      .nav-links,.nav-btn { display: none; }
+      .hamburger { display: flex; }
+      section { padding: 5rem 1.5rem; }
+      #home { padding: 8rem 1.5rem 4rem; }
+      .hero-ticker { display: none; }
+      .hero-meta { flex-direction: column; gap: 1.5rem; }
+      #about .about-layout { grid-template-columns: 1fr; gap: 2.5rem; }
+      #contact .cl { grid-template-columns: 1fr; gap: 2.5rem; }
+      .f-row { grid-template-columns: 1fr; }
+      footer { flex-direction: column; gap: 1rem; text-align: center; }
+    }
+    @media (max-width:600px) {
+      .hero-heading { font-size: 2.7rem; }
+      #projects .proj-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-lbl">Booting Portfolio</div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+  <div class="loader-pct" id="lp">0%</div>
+</div>
+
+<!-- CURSOR -->
+<div id="cursor-dot"></div>
+<div id="cursor-ring"></div>
+
+<!-- CANVAS -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- ======= NAV ======= -->
+<nav id="nav">
+  <a href="#home" class="nav-logo">
+    <div class="nav-blink"></div>
+    <!-- EDIT: your initials -->
+    pradoomrao@gmail.com
+  </a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a href="#contact" class="nav-btn"><span>Hire Me</span></a>
+  <button class="hamburger" id="hbg"><span></span><span></span><span></span></button>
+</nav>
+
+<div class="mob-nav" id="mn">
+  <button class="mob-close" id="mc">×</button>
+  <a href="#about"      onclick="cmn()">About</a>
+  <a href="#projects"   onclick="cmn()">Projects</a>
+  <a href="#experience" onclick="cmn()">Experience</a>
+  <a href="#contact"    onclick="cmn()">Contact</a>
+</div>
+
+<!-- ======= HERO ======= -->
+<section id="home">
+  <div class="hero-inner">
+    <!-- EDIT: status label -->
+    <div class="hero-status">
+      <span class="status-dot"></span>
+      Available for opportunities — Open to remote &amp; on-site roles
+    </div>
+
+    <!-- EDIT: Your name / title -->
+    <h1 class="hero-heading">
+      <span class="hero-line hl1"><span class="hero-line-inner">Pradoom</span></span>
+      <span class="hero-line hl1"><span class="hero-line-inner"><span class="ha">Rao</span></span></span>
+      <span class="hero-line hl2"><span class="hero-line-inner">Embedded</span></span>
+      <span class="hero-line hl2"><span class="hero-line-inner"><span class="ha">Systems</span></span></span>
+      <span class="hero-line hl2"><span class="hero-line-inner">Developer.</span></span>
+    </h1>
+
+    <div class="hero-meta">
+      <!-- EDIT: short bio tagline -->
+      <p class="hero-desc">
+        Crafting firmware, hardware interfaces, and real-time IoT solutions with
+        <strong id="typewriter">precision and passion</strong>. Bridging the gap between silicon and software.
+      </p>
+      <div class="hero-ctas">
+        <a href="#projects" class="btn btn-fill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="8 3 19 3 19 14"/><polyline points="5 21 19 3"/></svg>
+          View Projects
+        </a>
+        <a href="#contact" class="btn btn-ghost">Get In Touch</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT: Update numbers to your actual stats -->
+  <div class="hero-ticker">
+    <div class="ticker-item">
+      <span class="ticker-num" data-target="5">0</span>
+      <span class="ticker-lbl">Projects</span>
+    </div>
+    <div class="ticker-item">
+      <span class="ticker-num" data-target="1">0</span>
+      <span class="ticker-lbl">Years Exp.</span>
+    </div>
+    <div class="ticker-item">
+      <span class="ticker-num" data-target="6">0</span>
+      <span class="ticker-lbl">Technologies</span>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ======= ABOUT ======= -->
+<section id="about">
+  <div class="sec-head reveal">
+    <span class="sec-num">01 /</span>
+    <h2 class="sec-title">About Me</h2>
+    <div class="sec-line"></div>
+  </div>
+  <div class="about-layout">
+    <!-- EDIT: Your bio paragraphs -->
+    <div class="about-text reveal">
+      <p>I'm <strong>Pradoom Rao</strong>, an embedded systems and IoT developer who thrives at the intersection of hardware and software.</p>
+      <p>
+        I specialize in firmware for <strong>STM32F446</strong> and <strong>Raspberry Pi</strong> microcontrollers — writing low-level drivers, implementing communication protocols (I2C, SPI, UART, CAN), and building real-time systems with <strong>FreeRTOS</strong>.
+      </p>
+      <p>
+        Currently exploring <strong>edge AI and TinyML</strong> on resource-constrained devices, motor control algorithms, and robust LoRa mesh networking.
+      </p>
+    </div>
+
+    <!-- EDIT: Skill chips — add/remove freely -->
+    <div class="skills-wrap reveal">
+      <div>
+        <div class="sg-head">Languages</div>
+        <div class="chip-row">
+          <span class="chip">C</span><span class="chip">C++</span><span class="chip">Python</span><span class="chip">ARM Assembly</span>
+        </div>
+      </div>
+      <div>
+        <div class="sg-head">Platforms &amp; MCUs</div>
+        <div class="chip-row">
+          <span class="chip">STM32</span><span class="chip">ESP32</span><span class="chip">Arduino</span><span class="chip">Raspberry Pi</span><span class="chip">AVR</span>
+        </div>
+      </div>
+      <div>
+        <div class="sg-head">Protocols &amp; Tools</div>
+        <div class="chip-row">
+          <span class="chip">UART/SPI/I2C</span><span class="chip">FreeRTOS</span><span class="chip">CAN Bus</span><span class="chip">ATmega</span><span class="chip">KiCad</span><span class="chip">SWD</span><span class="chip">Git</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ======= PROJECTS ======= -->
+<section id="projects">
+  <div class="sec-head reveal">
+    <span class="sec-num">02 /</span>
+    <h2 class="sec-title">Projects</h2>
+    <div class="sec-line"></div>
+  </div>
+  <div class="proj-grid">
+
+    <!-- PROJECT 1 — EDIT below -->
+    <div class="proj-card reveal">
+      <div class="proj-visual">
+        <!-- EDIT: Replace with <img src="images/p1.jpg" alt=""> once you have a screenshot -->
+        <div class="proj-placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </div>
+        <div class="proj-overlay">
+          <!-- EDIT: GitHub and demo links -->
+          <a href="https://github.com/yourusername/project1" class="proj-overlay-btn" target="_blank">GitHub ↗</a>
+          <a href="#" class="proj-overlay-btn" target="_blank">Demo ↗</a>
+        </div>
+      </div>
+      <div class="proj-body">
+        <div class="proj-meta">
+          <span class="proj-num">PROJ / 01</span>
+          <span class="proj-feat">Featured</span>
+        </div>
+        <h3 class="proj-title">QUAD EXTENDER USING STM32</h3><!-- EDIT title -->
+        <p class="proj-desc">Developed STM32-based firmware for a Quad Extender module interfacing with Raspberry Pi(Quad). Implemented CAN communication to transmit 24V relay input/output status and controlled relay operations using GPIO drivers</p><!-- EDIT desc -->
+        <div class="proj-techs">
+          <!-- EDIT tech tags -->
+          <span class="tech-tag">STM32</span><span class="tech-tag">Raspberry Pi</span><span class="tech-tag">CAN 2.0A</span><span class="tech-tag">FreeRTOS</span><span class="tech-tag">C Programing</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROJECT 2 — EDIT below -->
+    <div class="proj-card reveal">
+      <div class="proj-visual">
+        <div class="proj-placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M1 12h3M20 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+        </div>
+        <div class="proj-overlay">
+          <a href="https://github.com/yourusername/project2" class="proj-overlay-btn" target="_blank">GitHub ↗</a>
+        </div>
+      </div>
+      <div class="proj-body">
+        <div class="proj-meta"><span class="proj-num">PROJ / 02</span></div>
+        <h3 class="proj-title">Industrial Current and Temperature Monitoring Using STM32</h3>
+        <p class="proj-desc">Designed an embedded monitoring system that acquires current and temperature data using STM32F103 and communicates with a Raspberry Pi via CAN protocol.</p>
+        <div class="proj-techs">
+          <span class="tech-tag">STM32</span><span class="tech-tag">CAN Bus</span><span class="tech-tag">FreeRTOS</span><span class="tech-tag">CT Current Sensor</span><span class="tech-tag">C Programming</span><span class="tech-tag">RTD Sensor</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROJECT 3 — EDIT below -->
+    <div class="proj-card reveal">
+      <div class="proj-visual">
+        <div class="proj-placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M1 6l10.5 6L22 6M1 6a2 2 0 012-2h18a2 2 0 012 2M1 6v12a2 2 0 002 2h18a2 2 0 002-2V6"/></svg>
+        </div>
+        <div class="proj-overlay">
+          <a href="https://github.com/yourusername/project3" class="proj-overlay-btn" target="_blank">GitHub ↗</a>
+          <a href="#" class="proj-overlay-btn" target="_blank">Demo ↗</a>
+        </div>
+      </div>
+      <div class="proj-body">
+        <div class="proj-meta"><span class="proj-num">PROJ / 03</span></div>
+        <h3 class="proj-title">Automatic code update in Raspberry pi</h3>
+        <p class="proj-desc">Challenge of updating code on Raspberry Pi 3B+ devices due to unstable internet connectivity. Implemented a centralized server connected via Ethernet to all Raspberry Pi for offline updates.</p>
+        <div class="proj-techs">
+          <span class="tech-tag">Raspberry Pi 3B+</span><span class="tech-tag">Python</span><span class="tech-tag">TCP/IP</span><span class="tech-tag">Automation</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADD MORE: Copy a proj-card block above, paste here, and edit the content -->
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ======= EXPERIENCE ======= -->
+<section id="experience">
+  <div class="sec-head reveal">
+    <span class="sec-num">03 /</span>
+    <h2 class="sec-title">Experience &amp; Learning</h2>
+    <div class="sec-line"></div>
+  </div>
+  <div class="tl">
+
+    <!-- EDIT: Timeline item — copy block to add more -->
+    <div class="tl-item">
+      <div class="tl-date">2025 — Present</div><!-- EDIT date -->
+      <div class="tl-title">Jr Embedded System Developer</div><!-- EDIT title -->
+      <div class="tl-org">Autosys industrial Soluction · Full-time</div><!-- EDIT org -->
+      <p class="tl-desc">Developed firmware for STM32-based industrial controllers. Implemented UART/SPI/I2C drivers, optimized power consumption, and maintained CI pipelines for testing.</p><!-- EDIT desc -->
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-date">2023</div>
+      <div class="tl-title">EMBEDDED SYSTEM</div>
+      <div class="tl-org">Vector India</div>
+      <p class="tl-desc">I have completed the Embedded C course certification offered by Vector India Pvt. Ltd. in Bangalore.Certification in STM32 Driver Development (Udemy).</p>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-date">2022</div>
+      <div class="tl-title">Associate Engineer</div>
+      <div class="tl-org">TechM Cerium System · Internship + Full-time</div>
+      <p class="tl-desc">Completed design and verification training.</p>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ======= CONTACT ======= -->
+<section id="contact">
+  <div class="sec-head reveal">
+    <span class="sec-num">04 /</span>
+    <h2 class="sec-title">Contact</h2>
+    <div class="sec-line"></div>
+  </div>
+  <div class="cl">
+    <div class="reveal">
+      <!-- EDIT: heading and blurb -->
+      <div class="contact-big">Let's build<br/><span>something</span><br/>great.</div>
+      <p class="contact-intro">Open to new opportunities, collaborations, and interesting embedded projects. Drop me a message — I reply within 24 hours.</p>
+      <div class="c-links">
+        <!-- EDIT: your email, GitHub, LinkedIn -->
+        <a href="pradoomrao@gmail.com" class="c-link">
+          <span class="c-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+          pradoomrao@gmail.com
+        </a>
+        <a href="https://github.com/pradoom" target="_blank" class="c-link">
+          <span class="c-icon"><svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></span>
+          https://github.com/pradoom
+        </a>
+        <a href="www.linkedin.com/in/pradoom-rao-4a6b00203" target="_blank" class="c-link">
+          <span class="c-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></span>
+          www.linkedin.com/in/pradoom-rao-4a6b00203
+        </a>
+      </div>
+    </div>
+
+    <!-- EDIT: Replace YOUR_FORM_ID with your Formspree ID (free at formspree.io) -->
+    <form class="cf reveal" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+      <div class="f-row">
+        <div class="f-group">
+          <label class="f-lbl" for="fn">Name</label>
+          <input class="f-in" type="text" id="fn" name="name" placeholder="Pradoom Rao" required/>
+        </div>
+        <div class="f-group">
+          <label class="f-lbl" for="fe">Email</label>
+          <input class="f-in" type="email" id="fe" name="email" placeholder="pradoomrao@gmail.com" required/>
+        </div>
+      </div>
+      <div class="f-group">
+        <label class="f-lbl" for="fs">Subject</label>
+        <input class="f-in" type="text" id="fs" name="subject" placeholder="Project inquiry / Job opportunity"/>
+      </div>
+      <div class="f-group">
+        <label class="f-lbl" for="fm">Message</label>
+        <textarea class="f-ta" id="fm" name="message" placeholder="Tell me about your project..." required></textarea>
+      </div>
+      <button type="submit" class="f-btn">
+        Send Message
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+      <p class="f-note">Messages forward directly to your email via Formspree (free plan).</p>
+    </form>
+  </div>
+</section>
+
+<!-- ======= FOOTER ======= -->
+<!-- EDIT: your name -->
+<footer>
+  <p class="fc">© 2025 <span>Pradoom Rao</span> — Engineered with precision.</p>
+  <div class="fl">
+    <a href="https://github.com/pradoom" target="_blank">GitHub</a>
+    <a href="www.linkedin.com/in/pradoom-rao-4a6b00203" target="_blank">LinkedIn</a>
+  </div>
+</footer>
+
+<!-- ======= JAVASCRIPT ======= -->
+<script>
+/* ----- LOADER ----- */
+(function(){
+  const loader=document.getElementById('loader'), lp=document.getElementById('lp');
+  let n=0;
+  const iv=setInterval(()=>{
+    n=Math.min(n+Math.random()*16,100);
+    lp.textContent=Math.floor(n)+'%';
+    if(n>=100){ clearInterval(iv); setTimeout(()=>loader.classList.add('done'),200); }
+  },80);
+})();
+
+/* ----- CURSOR ----- */
+const dot=document.getElementById('cursor-dot'), ring=document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+(function animC(){
+  rx+=(mx-rx)*.13; ry+=(my-ry)*.13;
+  dot.style.cssText=`left:${mx}px;top:${my}px`;
+  ring.style.cssText=`left:${rx}px;top:${ry}px`;
+  requestAnimationFrame(animC);
+})();
+document.querySelectorAll('a,button,.chip,.proj-card,.f-in,.f-ta,.f-btn,.btn').forEach(el=>{
+  el.addEventListener('mouseenter',()=>document.body.classList.add('c-hover'));
+  el.addEventListener('mouseleave',()=>document.body.classList.remove('c-hover'));
+});
+
+/* ----- CANVAS PARTICLES ----- */
+(function(){
+  const c=document.getElementById('bg-canvas'), ctx=c.getContext('2d');
+  let W,H,pts=[];
+  function resize(){ W=c.width=window.innerWidth; H=c.height=window.innerHeight; }
+  resize(); window.addEventListener('resize',resize);
+  const N=65, A=[0,255,194];
+  function rnd(a,b){return Math.random()*(b-a)+a;}
+  function mkPt(){return{x:rnd(0,W),y:rnd(0,H),vx:rnd(-.2,.2),vy:rnd(-.2,.2),r:rnd(.8,2),a:rnd(.1,.4)};}
+  for(let i=0;i<N;i++) pts.push(mkPt());
+  // animated circuit lines
+  const lines=Array.from({length:12},()=>({x:rnd(0,W),y:rnd(0,H),tx:rnd(0,W),ty:rnd(0,H),p:Math.random(),s:rnd(.002,.005),a:rnd(.04,.1)}));
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    // particles & connections
+    for(let i=0;i<N;i++){
+      const p=pts[i];
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0||p.x>W) p.vx*=-1;
+      if(p.y<0||p.y>H) p.vy*=-1;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${A},${p.a})`; ctx.fill();
+      for(let j=i+1;j<N;j++){
+        const q=pts[j],d=Math.hypot(p.x-q.x,p.y-q.y);
+        if(d<130){ ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.strokeStyle=`rgba(${A},${(1-d/130)*.07})`; ctx.lineWidth=.5; ctx.stroke(); }
+      }
+    }
+    // animated circuit traces
+    for(const l of lines){
+      l.p+=l.s;
+      if(l.p>1){l.x=l.tx;l.y=l.ty;l.tx=rnd(0,W);l.ty=rnd(0,H);l.p=0;}
+      const cx=l.x+(l.tx-l.x)*l.p, cy=l.y+(l.ty-l.y)*l.p;
+      ctx.beginPath(); ctx.moveTo(l.x,l.y); ctx.lineTo(cx,cy);
+      ctx.strokeStyle=`rgba(${A},${l.a})`; ctx.lineWidth=.8; ctx.stroke();
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ----- NAV SCROLL ----- */
+const nav=document.getElementById('nav');
+window.addEventListener('scroll',()=>nav.classList.toggle('scrolled',scrollY>60));
+
+/* ----- ACTIVE NAV ----- */
+const secs=document.querySelectorAll('section[id]'), nl=document.querySelectorAll('.nav-links a');
+new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      nl.forEach(a=>a.classList.remove('active'));
+      const a=document.querySelector(`.nav-links a[href="#${e.target.id}"]`);
+      if(a)a.classList.add('active');
+    }
+  });
+},{threshold:.4}).observe.bind(null); secs.forEach(s=>new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){nl.forEach(a=>a.classList.remove('active'));const a=document.querySelector(`.nav-links a[href="#${e.target.id}"]`);if(a)a.classList.add('active');}})},{threshold:.4}).observe(s));
+
+/* ----- SCROLL REVEAL ----- */
+const ro=new IntersectionObserver(entries=>entries.forEach((e,i)=>{if(e.isIntersecting){e.target.style.transitionDelay=(i%4)*.07+'s';e.target.classList.add('visible');}}),{threshold:.1});
+document.querySelectorAll('.reveal,.tl-item').forEach(el=>ro.observe(el));
+
+/* ----- COUNT UP ----- */
+const co=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){const el=e.target,t=+el.dataset.target;let c=0,step=t/40;const iv=setInterval(()=>{c=Math.min(c+step,t);el.textContent=Math.floor(c)+'+';if(c>=t)clearInterval(iv);},30);co.unobserve(el);}}),{threshold:.5});
+document.querySelectorAll('.ticker-num').forEach(el=>co.observe(el));
+
+/* ----- MAGNETIC BUTTONS ----- */
+document.querySelectorAll('.btn').forEach(btn=>{
+  btn.addEventListener('mousemove',function(e){
+    const r=this.getBoundingClientRect(),dx=(e.clientX-r.left-r.width/2)*.2,dy=(e.clientY-r.top-r.height/2)*.2;
+    this.style.transform=`translate(${dx}px,${dy}px)`;
+  });
+  btn.addEventListener('mouseleave',function(){this.style.transform='';});
+});
+
+/* ----- CARD TILT ----- */
+document.querySelectorAll('.proj-card').forEach(card=>{
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+    card.style.transform=`translateY(-6px) rotateX(${-y*6}deg) rotateY(${x*6}deg)`;
+    card.style.transition='transform .1s';
+  });
+  card.addEventListener('mouseleave',()=>{card.style.transform='';card.style.transition='transform .4s var(--ease),border-color .3s,box-shadow .4s';});
+});
+
+/* ----- TYPEWRITER ----- */
+(function(){
+  const el=document.getElementById('typewriter');
+  if(!el)return;
+  const phrases=['Firmware Engineering','IoT Development','Hardware Design','Embedded Systems'];
+  let pi=0,ci=0,del=false;
+  el.style.borderRight='2px solid var(--a1)';
+  function type(){
+    const p=phrases[pi];
+    if(!del){el.textContent=p.slice(0,++ci);if(ci===p.length){del=true;setTimeout(type,1800);return;}}
+    else{el.textContent=p.slice(0,--ci);if(ci===0){del=false;pi=(pi+1)%phrases.length;}}
+    setTimeout(type,del?45:90);
+  }
+  setTimeout(type,1600);
+})();
+
+/* ----- MOBILE NAV ----- */
+document.getElementById('hbg').addEventListener('click',()=>document.getElementById('mn').classList.add('open'));
+document.getElementById('mc').addEventListener('click',()=>document.getElementById('mn').classList.remove('open'));
+function cmn(){document.getElementById('mn').classList.remove('open');}
+
+/* ----- TOUCH: disable custom cursor ----- */
+if('ontouchstart' in window){
+  dot.style.display='none'; ring.style.display='none';
+  document.body.style.cursor='auto';
+}
+</script>
+</body>
+</html>
